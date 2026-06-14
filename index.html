@@ -2,8 +2,93 @@
 <html>
 <head>
   <title>chroto.store</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+ 
+    body {
+      background: #0d0d0d;
+      color: white;
+      font-family: 'Segoe UI', sans-serif;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+ 
+    .navbar {
+      width: 100%;
+      display: flex;
+      justify-content: center;
+      gap: 24px;
+      padding: 20px;
+    }
+ 
+    .navbar a {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      text-decoration: none;
+      color: #aaa;
+      font-size: 15px;
+      transition: color 0.2s;
+    }
+ 
+    .navbar a:hover {
+      color: white;
+    }
+ 
+    .navbar img {
+      width: 24px;
+      height: 24px;
+    }
+ 
+    .hero {
+      margin-top: 120px;
+      text-align: center;
+      opacity: 0;
+      animation: fadeIn 1s ease forwards;
+    }
+ 
+    h1 {
+      font-size: 48px;
+      font-weight: 700;
+      letter-spacing: -1px;
+    }
+ 
+    p {
+      color: #888;
+      margin-top: 12px;
+      font-size: 16px;
+      opacity: 0;
+      animation: fadeIn 1s ease 0.5s forwards;
+    }
+ 
+    @keyframes fadeIn {
+      to { opacity: 1; }
+    }
+  </style>
 </head>
 <body>
-  <h1>Coming Soon</h1>
+ 
+  <nav class="navbar">
+    <a href="https://discord.gg/MuX5XyUyPC" target="_blank">
+      <img src="https://assets-global.website-files.com/6257adef93867e50d84d30e2/636e0a6a49cf127bf92de1e2_icon_clyde_blurple_RGB.png" alt="Discord">
+      Discord
+    </a>
+    <a href="https://chroto.mysellauth.com/" target="_blank">
+      <img src="https://chroto.mysellauth.com/favicon.ico" alt="SellAuth">
+      Shop
+    </a>
+  </nav>
+ 
+  <div class="hero">
+    <h1>chroto.store</h1>
+    <p>Coming Soon</p>
+  </div>
+ 
 </body>
 </html>
