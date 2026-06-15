@@ -190,21 +190,21 @@ app.post('/create-invoice', async (req, res) => {
         const ltcPrice = await axios.get('https://api.coingecko.com/api/v3/simple/price?ids=litecoin&vs_currencies=usd');
         const ltcAmount = (amount / ltcPrice.data.litecoin.usd).toFixed(8);
 
+        const orderNumber = `${req.session.user.id}-${Date.now()}`;
         const response = await axios.get('https://plisio.net/api/v1/invoices/new', {
           params: {
             api_key: process.env.PLISIO_API_KEY,
-           currency: 'LTC',
+            currency: 'LTC',
             amount: ltcAmount,
-        order_name: `Balance Top Up - ${req.session.user.username}`,
-        order_number: `${req.session.user.id}-${Date.now()}`,
-        callback_url: `https://chroto.store/plisio-webhook`,
-        email: `${req.session.user.id}@chroto.store`
-      }
-    });
- 
-    if (response.data.status === 'success') {
-      await db.collection('pending').insertOne({
-        order_number: `${req.session.user.id}-${Date.now()}`,
+            order_name: `Balance Top Up - ${req.session.user.username}`,
+            order_number: orderNumber,
+            callback_url: `https://chroto.store/plisio-webhook`,
+            email: `${req.session.user.id}@chroto.store`
+          }
+        });
+        if (response.data.status === 'success') {
+          await db.collection('pending').insertOne({
+            order_number: orderNumber,
         user_id: req.session.user.id,
         amount,
         created_at: new Date()
