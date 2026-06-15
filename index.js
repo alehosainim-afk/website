@@ -129,7 +129,7 @@ app.get('/dashboard', async (req, res) => {
       Discord
     </a>
     <a href="https://chroto.mysellauth.com/" target="_blank">
-      <img class="sellauth-icon" src="https://chroto.mysellauth.com/favicon.ico" alt="SellAuth">
+      <img class="sellauth-icon" src="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQEAYABgAAD/2wBDAAoHBwkHBgoJCAkLCwoMDxkQDw4ODx4WFxIZJCAmJSMgIyIoLTkwKCo2KyIjMkQyNjs9QEBAJjBGS0U+Sjk/QD3/2wBDAQsLCw8NDx0QEB09KSMpPT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT3/wAARCAC0ALQDASIAAhEBAxEB/8QAHwAAAQUBAQEBAQEAAAAAAAAAAAECAwQFBgcICQoL/8QAtRAAAgEDAwIEAwUFBAQAAAF9AQIDAAQRBRIhMUEGE1FhByJxFDKBkaEII0KxwRVS0fAkM2JyggkKFhcYGRolJicoKSo0NTY3ODk6Q0RFRkdISUpTVFVWV1hZWmNkZWZnaGlqc3R1dnd4eXqDhIWGh4iJipKTlJWWl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi4+Tl5ufo6erx8vP09fb3+Pn6/8QAHwEAAwEBAQEBAQEBAQAAAAAAAAECAwQFBgcICQoL/8QAtREAAgECBAQDBAcFBAQAAQJ3AAECAxEEBSExBhJBUQdhcRMiMoEIFEKRobHBCSMzUvAVYnLRChYkNOEl8RcYGRomJygpKjU2Nzg5OkNERUZHSElKU1RVVldYWVpjZGVmZ2hpanN0dXZ3eHl6goOEhYaHiImKkpOUlZaXmJmaoqOkpaanqKmqsrO0tba3uLm6wsPExcbHyMnK0tPU1dbX2Nna4uPk5ebn6Onq8vP09fb3+Pn6/9oADAMBAAIRAxEAPwDyL8aPxoorUQfjRRRQIKPxoooAKKKKACj8aKKAD8aPxoooAPxo/GiigA/Gj8aKKAD8aPxoooAPxo/GiigA/Gj8aKKAD8aKKKACj8KPxooAPwooooAKKKKAD8KPwo/Gj8aAD8KPwo/Gj8aAD8KPwo/GigA/Cj8KPxo/GgA/Cj8KPxo/GgA/Cj8KPxo/GgA/Cj8KPxo/GgA/Cj8KPxo/GgA/Cij8aKACiiigAooo/CgAoo/Cj8KACinxQvNIEiRnc/wqOatHRtRVdzWU4X1KUAUqKc6FHKsMMOoNNoAKKPwo/CgAoo/Ctnw/4V1DxNK8enqpZBk7qAMaitzxH4Q1LwvHC+oqgErFV2+1RaB4YvvEkrx6eFLJ13UrgZFFb2v+DdT8NwpJqCKFY4+WsHFMAooo/CgAoo/Cj8KACij8KKAD8aKKKACiiigAq3pdhJqepW9nF9+ZwgPpmqldB4Huo7Txbp7zYC+cvJ7c0Ae6+HfBWj+GNKVpYInlVd0s0oBwe9OHizwe8pgN9Ylhxtx/9atLxLp8mueGru0tZNr3EeEYGvmvWfDup6FdNFe28iNnhhzkeuRUAerfFOHw9F4aFxaQW/2iRhsaJQMj1rxMfXipWmllULJK7qOgZiQK2PCXhmfxTrKWMB2p96R8dFpgYffHJpcHOMH8q+jrXwn4Y8HaaklzFEAo+aST5tx74FLbweEfF0bw2qQy44OxdhouB839Me9esfAz/kIXv/XP+tc78RPA3/CK3qzW6k2Uv3f9n2ro/gbj+0b3/rn/AFoewF748f8AIO0rP/PV/wCVZfwPI/tO9HsP5VqfHj/kH6V/11b+VZfwQx/at5+H8qOgG18bz/xKrYf7QrxOvbPjfj+y7b/eFeJ01sAUhpaSmAfjR+NFFAB+NFFFAB+FH4UfjR+NAB+FH4UfjR+NAB+FKjtGwZSQwOQRSfjWhoujXOu34tLQr5pGRu70AekeCfi39khjsdaBMaABZgMn6Yr1GKfR/FGnkKYbmJxyuQSPrXzhf+Eda06VkuNPuAqnG/bwa6L4Z2+uW3iu3FvFcLbEnzcj5cY71NgLvxH+HSaDE2padn7KTho8fcz6V0HwLs420m9vMfvPNMefbFdh8QzGvg27M2NuOM+uK4v4H6hGljeWBYeaXMoHt0pDOn8d+DLrxe0CR3bRQxHO0dM1j+EfhfeeGteivxfMyIDlOxqf4oXmv6ZHFd6RNMkHRwh+7715avxA8TyNsTU7kknoH5oA9e+Ltus3giQsPmWVSDXIfAwEahe/9c/61x2t694nubBU1aW7+yyHI83o1dl8DSf7RveePL/qKOgF748/8g/Sv+ur/wAqy/gf/wAhW957D+Vavx4J/s/Sv+urfyrL+B4/4mt79B/Kn0A2Pjf/AMgu2/3hXide2fG8f8Sy2/3hXilNbCCkNLSUwD8KPwo/Gj8aAD8KKPxooAKKPwo/CgAooooAK3/BmuQ+H/EEV5cIzIODg4rApRxSYH0fbfEXwpqMI+0X0Csf4JBnFPfx/wCEdOjZoL+13Y+5EuCf0r5s6dO9BJI5zRygd78QfiNL4oxZ2amKyU5IPVj61y3h/Xrrw7qiXtq+Cv3h6isvNFFhn0Ho/wAU/D+s2YTU3S3Yr8yTDcCatHxH4ChzIJtMBHPEQz/KvnLJznnNBJPUmk0I9F+KHi7Stf8As9tpWCkQxuHAP0FL8J/EWmeHr24fU7pIFdMDd65rzn09qU9c0AenfF7xXpXiG20+PS7xJzE7F9o6cVQ+FHiLTvD9/cyalcLCr4wT9K8/yfzqWS1niQPJGQnY01FtaBc9O+K/ivSdesrePTLxJ2UjIUGvLKO+aKEAUUfhR+FMAoo/Cj8KACij8KKAD8aPxoooAPxooooAPxrc8NaZFeXLyXKB4EXkHpmsMKWOAMmuuUf2P4WLdJLgY9xkV04eF3zPZESZneJ9NisrhHtkCQuBgCsKuvYDWPDG48yw8DNchghiD1FViYJPmjswgworV0DTI9TvTFMWCbSfl61V1K1Wzv5oEJKoxAzWHI+XmK5tbFT8aKXrW5q+iwWGnQzQszO45yacaTmm0DdjFhiM8yxr1ZgKtanp506YRsckrmtfw3ZWMk0ck0v74HIQHvWnrdlpVxebru6Mb7em6uinQvS5iebU4lR8y/UV12vjHh+E4HQVz2o29pb3YWzm8yPjnOa6y+0+TUNIgij4yAST0FPD03yzQNnC9qK6hdL0W3wk13uf+LawwKS+8NwPam50+UuijJBOaz+qya0Y3KyOYopSMMR6Ulcuw1qH40fjRRQMPxooooAPwo/Cj8aPxoAPwoo/GgDPegC9o9mb7UoYhnruP4Vt+KRNPMlvDG3lIOfrTvC9ultaTX0g6D5Sajbxm5Yn7Kp+pr0qahGlabtczvdjvC3nRTvBLE3luMDI4zWLrNm1lqUsRGBnI/GtdPGMjSr/AKMqjPY1Y8VQrc2UV7GOo+YiiUIzo2i72FezKXg//kKH/cNZuu/8hm5/3zWl4N51U/7hrP15cazc5H8ZrKX8BDW5nr1H1rrfEf8AyBoPoK5NQS6qBnmuw8UDZpEI9hRhl+7mxyMHw8P+JtHVnxaP+Jsn+5/Wq/h4j+1o6s+LuNWT/cH86S0w4uphqBvX613Gr3b23hxTGcMQBkVw6/6xfrXXa9/yL0X0FPCt8k2OXQ5AsSck5Ndd4Odmjmic5XGcGuQFdZ4J/wBbN9KzwzftBS2OZuuLyb/fP86hqa8/4/Z/+ujfzqGsqvxsuOwfhR+FH40fjWYw/Cij8aKACij8KPwoAKfEm+RVzjJ6mmfhQKaA6vWLuGw0KGxtpFcsP4T0rlMUuWI+Y5orWrWdRryFGNgGc11uj3MF9oktrdSohUfxHGa5Kk3lenelSqum7g1c0tIvF0rVRI3IGVyPSug1HSrDWCLqC6RWPUFhXGk5605XZBhWYD2NaU66inGSuhONzpYNIsNIP2m7uRKV6RqQc1N4kvYb3SYWjdST/CDyK5MuzfeYn60bmxjJx6Vp9YSi4xWjFyk+m3Js76OXqFPOfSut1GztNe8u5juEEm3GM9BXE4FPSaSPiNmX6GsqdbkTi1dA43Luo2KWN0saShxkZIORW9rdzDLoMSJKjMMZUHmuTZmY5Ykmjcf71ONflTSW4+USun8G3EUE0vmyomRxuOK5c0oYjkcGs6dTklcGrk12QbuYg5BdufxqGiiok+Z3Ggoo/Cj8KkYUUfhRQAfjR+NFFAB+NFFFAC0UlFAC0lFFABRRRQAUUUUAFFFFMAzRRRQAUUUUAH40fjRRSAPxo/GiigA/GiiigA/Cj8KPxo/GgA/Cj8KPxo/GgA/Cj8KPxo/GgA/Cj8KPxo/GgA/Cj8KPxo/GgA/Cj8KPxo/GgA/Cj8KPxo/GgA/Cj8KPxo/GgA/Cj8KPxo/GgA/Cj8KPxo/GgA/Cj8KPxo/GgA/Cij8aKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKAP/2Q==" alt="SellAuth">
       Shop
     </a>
   </nav>
@@ -177,11 +177,14 @@ app.post('/create-invoice', async (req, res) => {
   if (!amount || amount <= 0) return res.status(400).json({ error: 'Invalid amount' });
  
   try {
-    const response = await axios.get('https://plisio.net/api/v1/invoices/new', {
-      params: {
-        api_key: process.env.PLISIO_API_KEY,
-        currency: 'LTC',
-        amount,
+        const ltcPrice = await axios.get('https://api.coingecko.com/api/v3/simple/price?ids=litecoin&vs_currencies=usd');
+        const ltcAmount = (amount / ltcPrice.data.litecoin.usd).toFixed(8);
+
+        const response = await axios.get('https://plisio.net/api/v1/invoices/new', {
+          params: {
+            api_key: process.env.PLISIO_API_KEY,
+           currency: 'LTC',
+            amount: ltcAmount,
         order_name: `Balance Top Up - ${req.session.user.username}`,
         order_number: `${req.session.user.id}-${Date.now()}`,
         callback_url: `https://chroto.store/plisio-webhook`,
