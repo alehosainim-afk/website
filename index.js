@@ -1,6 +1,8 @@
 const express = require('express');
 const session = require('express-session');
 const axios = require('axios');
+const multer = require('multer');
+const upload = multer();
 const { MongoClient } = require('mongodb');
 const { Client: DiscordClient, GatewayIntentBits } = require('discord.js');
 const discordBot = new DiscordClient({ intents: [GatewayIntentBits.Guilds] });
@@ -217,7 +219,7 @@ app.post('/create-invoice', async (req, res) => {
   }
 });
  
-app.post('/plisio-webhook', async (req, res) => {
+app.post('/plisio-webhook', upload.any(), async (req, res) => {
   try {
     const data = req.body;
     console.log('Plisio webhook:', JSON.stringify(data));
