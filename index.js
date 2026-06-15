@@ -2,6 +2,9 @@ const express = require('express');
 const session = require('express-session');
 const axios = require('axios');
 const { MongoClient } = require('mongodb');
+const { Client: DiscordClient, GatewayIntentBits } = require('discord.js');
+const discordBot = new DiscordClient({ intents: [GatewayIntentBits.Guilds] });
+discordBot.login(process.env.BOT_TOKEN);
 const path = require('path');
  
 const app = express();
@@ -212,16 +215,22 @@ app.post('/create-invoice', async (req, res) => {
 app.post('/plisio-webhook', async (req, res) => {
   try {
     const data = req.body;
+    console.log('Plisio webhook:', JSON.stringify(data));
     if (data.status !== 'completed') return res.sendStatus(200);
  
     const orderNumber = data.order_number;
     const pending = await db.collection('pending').findOne({ order_number: orderNumber });
     if (!pending) return res.sendStatus(200);
  
-    await addBalance(pending.user_id, pending.amount);
-    await db.collection('pending').deleteOne({ order_number: orderNumber });
- 
-    console.log(`Added $${pending.amount} to user ${pending.user_id}`);
+        await addBalance(pending.user_id, pending.amount);
+        await db.collection('pending').deleteOne({ order_number: orderNumber });
+        console.log(`Added $${pending.amount} to user ${pending.user_id}`);
+        try {
+          const user = await discordBot.users.fetch(pending.user_id);
+          await user.send(`✅ Your balance has been topped up with **$${pending.amount}**!`);
+        } catch (e) {
+          console.log('DM error:', e.message);
+        }
     res.sendStatus(200);
   } catch (e) {
     console.log('Webhook error:', e.message);
