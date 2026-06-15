@@ -10,7 +10,7 @@
     "express-session": "^1.17.3",
     "axios": "^1.6.0",
     "mongodb": "^6.0.0",
-    "discord.js": "^14.0.0"
+    "discord.js": "^14.0.0",
     "multer": "^1.4.5"
   }
 }
