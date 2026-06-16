@@ -110,7 +110,7 @@ function getLayout(user, balance, activePage, content) {
     .sidebar-link.red:hover { background: rgba(237,66,69,0.1); }
     .sidebar-icon { font-size: 16px; width: 20px; text-align: center; }
     .sidebar-spacer { flex: 1; }
-    .sidebar-user { padding: 12px; border-top: 1px solid #1e1e1e; display: flex; align-items: center; gap: 10px; background: #161616; margin: 8px; border-radius: 10px; border: 1px solid #222; }
+    .sidebar-user { padding: 12px; border-top: 1px solid #1e1e1e; display: flex; align-items: center; gap: 10px; background: #161616; margin: 8px; border-radius: 10px; border: 1px solid var(--gold); }
     .sidebar-avatar { width: 34px; height: 34px; border-radius: 50%; object-fit: cover; }
     .sidebar-uname { font-size: 13px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     .sidebar-ubal { font-size: 12px; color: var(--gold); font-weight: 600; }
