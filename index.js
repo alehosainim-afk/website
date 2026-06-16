@@ -94,7 +94,7 @@ function getLayout(user, balance, activePage, content) {
     .slide-link.red { color: #ed4245; }
     .slide-link.red:hover { background: rgba(237,66,69,0.1); }
     .slide-link-icon { font-size: 16px; width: 20px; text-align: center; }
-    .slide-menu-user { padding: 16px; border-top: 1px solid #1e1e1e; display: flex; align-items: center; gap: 12px; }
+    .slide-menu-user { margin: 8px; border-radius: 10px; border: 1px solid var(--gold); background: #161616; padding: 12px; display: flex; align-items: center; gap: 12px; }
     .slide-avatar { width: 38px; height: 38px; border-radius: 50%; object-fit: cover; }
     .slide-userinfo-name { font-size: 13px; font-weight: 600; }
     .slide-userinfo-bal { font-size: 12px; color: var(--gold); font-weight: 600; }
