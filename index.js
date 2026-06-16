@@ -172,7 +172,7 @@ function getLayout(user, balance, activePage, content) {
     </a>
     <div class="slide-cat">Account</div>
     <a href="/topup" class="slide-link ${activePage === 'topup' ? 'active' : ''}" onclick="closeMenu()">
-      <span class="slide-link-icon">👛</span> Top Up
+      <span class="slide-link-icon">💼</span> Top Up
     </a>
     <a href="/logout" class="slide-link red">
       <span class="slide-link-icon">🚪</span> Sign Out
@@ -198,7 +198,7 @@ function getLayout(user, balance, activePage, content) {
     </a>
     <div class="sidebar-cat">Account</div>
     <a href="/topup" class="sidebar-link ${activePage === 'topup' ? 'active' : ''}">
-      <span class="sidebar-icon">👛</span> Top Up
+      <span class="sidebar-icon">💼</span> Top Up
     </a>
     <a href="/logout" class="sidebar-link red">
       <span class="sidebar-icon">🚪</span> Sign Out
@@ -292,7 +292,7 @@ app.get('/topup', async (req, res) => {
   const balance = await getBalance(req.session.user.id);
   const content = `
     <div class="topup-card">
-      <h2>👛 Top Up Balance</h2>
+      <h2>💼 Top Up Balance</h2>
       <p>Add funds to your Chroto balance using LTC.</p>
       <div class="balance-display">
         <div class="balance-amount">$${balance.toFixed(2)}</div>
