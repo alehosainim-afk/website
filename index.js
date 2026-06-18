@@ -602,6 +602,8 @@ app.post('/api/spin', async (req, res) => {
   if (spins <= 0) return res.json({ error: 'No spins available!' });
   await db.collection('spins').updateOne({ _id: req.session.user.id }, { $inc: { spins: -1 } });
   const prize = spinWheel();
+  console.log(`Prize object: ${JSON.stringify(prize)}`);
+  console.log(`Prize amount: ${prize.amount}, type: ${typeof prize.amount}`);
   if (prize.amount > 0) {
     await addBalance(req.session.user.id, prize.amount);
     console.log(`Spin win: $${prize.amount} for user ${req.session.user.id}`);
