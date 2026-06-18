@@ -496,6 +496,12 @@ app.get('/spin', async (req, res) => {
       ];
       const canvas = document.getElementById('wheelCanvas');
       const ctx = canvas.getContext('2d');
+      const dpr = window.devicePixelRatio || 1;
+      canvas.width = 300 * dpr;
+      canvas.height = 300 * dpr;
+      canvas.style.width = '300px';
+      canvas.style.height = '300px';
+      ctx.scale(dpr, dpr);vas');
       let currentAngle = 0;
       function drawWheel(angle) {
         const cx = 150, cy = 150, r = 140;
@@ -533,21 +539,29 @@ app.get('/spin', async (req, res) => {
         spinning = true;
         document.getElementById('spin-btn').disabled = true;
         document.getElementById('spin-result').textContent = '';
+  
         const res = await fetch('/api/spin', { method: 'POST' });
         const data = await res.json();
+  
         if (data.error) {
           document.getElementById('spin-result').textContent = data.error;
           spinning = false;
+          document.getElementById('spin-btn').disabled = false;
           return;
         }
-        const targetSlice = data.sliceIndex;
+  
+        const sliceIndex = data.sliceIndex;
         const sliceAngle = (2 * Math.PI) / prizes.length;
-        const targetAngle = -(targetSlice * sliceAngle + sliceAngle / 2);
+        const targetAngle = -(sliceIndex * sliceAngle + sliceAngle / 2);
         const extraSpins = 5 * 2 * Math.PI;
-        const finalAngle = currentAngle + extraSpins + (targetAngle - (currentAngle % (2 * Math.PI)));
+        const normalizedCurrent = currentAngle % (2 * Math.PI);
+        const diff = ((targetAngle - normalizedCurrent) % (2 * Math.PI) + 2 * Math.PI) % (2 * Math.PI);
+        const finalAngle = currentAngle + extraSpins + diff;
+  
         const duration = 4000;
         const start = performance.now();
         const startAngle = currentAngle;
+  
         function animate(now) {
           const elapsed = now - start;
           const progress = Math.min(elapsed / duration, 1);
@@ -560,7 +574,7 @@ app.get('/spin', async (req, res) => {
             currentAngle = finalAngle;
             drawWheel(currentAngle);
             spinning = false;
-            const result = data.prize;
+      const result = data.prize;
             if (result.amount > 0) {
               document.getElementById('spin-result').innerHTML = '<span style="color:#f0c040;">🎉 You won ' + result.label + '!</span>';
             } else {
@@ -590,8 +604,8 @@ app.post('/api/spin', async (req, res) => {
     await addBalance(req.session.user.id, prize.amount);
     console.log(`Spin win: $${prize.amount} for user ${req.session.user.id}`);
   }
-  const sliceMap = { 'Nothing': 0, '$0.25': 1, '$0.50': 3, '$1.00': 7, '$2.00': 11 };
-  const sliceIndex = sliceMap[prize.label] ?? 0;
+  const sliceIndexMap = { 'Nothing': 0, '$0.25': 1, '$0.50': 3, '$1.00': 7, '$2.00': 11 };
+  const sliceIndex = sliceIndexMap[prize.label] ?? 0;
   const spinsLeft = await getSpins(req.session.user.id);
   console.log(`Spin result: ${prize.label}, sliceIndex: ${sliceIndex}, spinsLeft: ${spinsLeft}`);
   res.json({ prize, sliceIndex, spinsLeft });
