@@ -351,6 +351,19 @@ app.get('/dashboard', (req, res) => {
   if (!req.session.user) return res.redirect('/login');
   res.redirect('/orders');
 });
+
+app.get('/admin/give-spin-user', async (req, res) => {
+  if (req.query.key !== process.env.ADMIN_KEY) return res.status(403).send('Forbidden');
+  const userId = req.query.userId;
+  const amount = parseInt(req.query.amount) || 1;
+  if (!userId) return res.status(400).send('userId fehlt');
+  await db.collection('spins').updateOne(
+    { _id: userId },
+    { $inc: { spins: amount } },
+    { upsert: true }
+  );
+  res.send(`✅ Gave ${amount} spin(s) to user ${userId}!`);
+});
  
 app.post('/create-invoice', async (req, res) => {
   if (!req.session.user) return res.status(401).json({ error: 'Not logged in' });
