@@ -81,7 +81,7 @@ function getLayout(user, balance, activePage, content) {
  
     .slide-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 998; }
     .slide-overlay.open { display: block; }
-    .slide-menu { position: fixed; top: 0; right: -300px; width: 280px; height: 100vh; background: var(--bg2); border-left: 1px solid #222; z-index: 999; transition: right 0.3s ease; display: flex; flex-direction: column; }
+    .slide-menu { position: fixed; top: 0; right: -300px; width: 280px; height: 100vh; background: var(--bg2); border-left: 1px solid #222; z-index: 999; transition: right 0.3s ease; display: flex; flex-direction: column; padding-bottom: 16px; }
     .slide-menu.open { right: 0; }
     .slide-menu-top { padding: 20px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #1e1e1e; }
     .slide-menu-top span { font-weight: 700; color: var(--gold); font-size: 16px; }
