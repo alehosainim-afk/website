@@ -558,7 +558,11 @@ app.get('/spin', async (req, res) => {
         const sliceAngle = (2 * Math.PI) / prizes.length;
         const targetAngle = -(sliceIndex * sliceAngle + sliceAngle / 2);
         const extraSpins = 5 * 2 * Math.PI;
-        const finalAngle = currentAngle + extraSpins + ((targetAngle - currentAngle) % (2 * Math.PI) + 2 * Math.PI) % (2 * Math.PI);
+        const normalizedCurrent = ((currentAngle % (2 * Math.PI)) + 2 * Math.PI) % (2 * Math.PI);
+        const targetNormalized = ((targetAngle % (2 * Math.PI)) + 2 * Math.PI) % (2 * Math.PI);
+        let diff = targetNormalized - normalizedCurrent;
+        if (diff <= 0) diff += 2 * Math.PI;
+        const finalAngle = currentAngle + extraSpins + diff;
         const duration = 4000;
         const start = performance.now();
         const startAngle = currentAngle;
@@ -606,8 +610,15 @@ app.post('/api/spin', async (req, res) => {
     await addBalance(req.session.user.id, prize.amount);
     console.log(`Spin win: $${prize.amount} for user ${req.session.user.id}`);
   }
-  const prizeLabels = ['Nothing','$0.25','Nothing','$0.50','Nothing','$0.25','Nothing','$1.00','Nothing','$0.25','Nothing','$2.00'];
-  const sliceIndex = prizeLabels.indexOf(prize.label);
+  const prizeToIndices = {
+    'Nothing': [0, 2, 4, 6, 8, 10],
+    '$0.25': [1, 5, 9],
+    '$0.50': [3],
+    '$1.00': [7],
+    '$2.00': [11]
+  };
+  const possibleIndices = prizeToIndices[prize.label] || [0];
+  const sliceIndex = possibleIndices[Math.floor(Math.random() * possibleIndices.length)];
   const spinsLeft = await getSpins(req.session.user.id);
   console.log(`Spin result: ${prize.label}, sliceIndex: ${sliceIndex}, spinsLeft: ${spinsLeft}`);
   res.json({ prize, sliceIndex, spinsLeft });
