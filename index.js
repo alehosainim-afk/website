@@ -606,8 +606,8 @@ app.post('/api/spin', async (req, res) => {
     await addBalance(req.session.user.id, prize.amount);
     console.log(`Spin win: $${prize.amount} for user ${req.session.user.id}`);
   }
-  const sliceIndexMap = { 'Nothing': 0, '$0.25': 1, '$0.50': 3, '$1.00': 7, '$2.00': 11 };
-  const sliceIndex = sliceIndexMap[prize.label] ?? 0;
+  const prizeLabels = ['Nothing','$0.25','Nothing','$0.50','Nothing','$0.25','Nothing','$1.00','Nothing','$0.25','Nothing','$2.00'];
+  const sliceIndex = prizeLabels.indexOf(prize.label);
   const spinsLeft = await getSpins(req.session.user.id);
   console.log(`Spin result: ${prize.label}, sliceIndex: ${sliceIndex}, spinsLeft: ${spinsLeft}`);
   res.json({ prize, sliceIndex, spinsLeft });
