@@ -573,10 +573,14 @@ app.post('/api/spin', async (req, res) => {
   if (spins <= 0) return res.json({ error: 'No spins available!' });
   await db.collection('spins').updateOne({ _id: req.session.user.id }, { $inc: { spins: -1 } });
   const prize = spinWheel();
-  if (prize.amount > 0) await addBalance(req.session.user.id, prize.amount);
+  if (prize.amount > 0) {
+    await addBalance(req.session.user.id, prize.amount);
+    console.log(`Spin win: $${prize.amount} for user ${req.session.user.id}`);
+  }
   const sliceMap = { 'Nothing': 0, '$0.25': 1, '$0.50': 3, '$1.00': 7, '$2.00': 11 };
   const sliceIndex = sliceMap[prize.label] ?? 0;
   const spinsLeft = await getSpins(req.session.user.id);
+  console.log(`Spin result: ${prize.label}, sliceIndex: ${sliceIndex}, spinsLeft: ${spinsLeft}`);
   res.json({ prize, sliceIndex, spinsLeft });
 });
 
