@@ -470,9 +470,9 @@ app.get('/spin', async (req, res) => {
         <div style="font-size:12px;color:var(--text-muted);margin-top:4px;">Spins Available</div>
       </div>
       <div style="position:relative;width:300px;height:300px;margin:0 auto 24px;">
-        <canvas id="wheelCanvas" width="300" height="300"></canvas>
-        <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:40px;height:40px;background:var(--bg2);border:3px solid var(--gold);border-radius:50%;z-index:10;"></div>
-        <div style="position:absolute;top:-12px;left:50%;transform:translateX(-50%);font-size:24px;z-index:10;">▼</div>
+        <div style="position:absolute;top:-14px;left:50%;transform:translateX(-50%);font-size:24px;z-index:10;">▼</div>
+        <svg id="wheelSvg" width="300" height="300" viewBox="0 0 300 300" style="display:block;"></svg>
+        <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:36px;height:36px;background:#111;border:3px solid var(--gold);border-radius:50%;z-index:10;"></div>
       </div>
       <div id="spin-result" style="text-align:center;font-size:18px;font-weight:700;margin-bottom:16px;min-height:28px;"></div>
       <button class="topup-btn" id="spin-btn" onclick="doSpin()" ${spins === 0 ? 'disabled style="opacity:0.5;cursor:not-allowed;"' : ''}>
@@ -481,75 +481,79 @@ app.get('/spin', async (req, res) => {
     </div>
     <script>
       const prizes = [
-        { label: 'Nothing', color: '#1a1a1a' },
-        { label: '$0.25', color: '#2a4a2a' },
-        { label: 'Nothing', color: '#1a1a1a' },
-        { label: '$0.50', color: '#2a3a4a' },
-        { label: 'Nothing', color: '#1a1a1a' },
-        { label: '$0.25', color: '#2a4a2a' },
-        { label: 'Nothing', color: '#1a1a1a' },
-        { label: '$1.00', color: '#4a3a2a' },
-        { label: 'Nothing', color: '#1a1a1a' },
-        { label: '$0.25', color: '#2a4a2a' },
-        { label: 'Nothing', color: '#1a1a1a' },
-        { label: '$2.00', color: '#4a2a2a' },
+        { label: 'Nothing', color: '#1a1a1a', text: '#555' },
+        { label: '$0.25', color: '#1a3a1a', text: '#4caf50' },
+        { label: 'Nothing', color: '#222', text: '#555' },
+        { label: '$0.50', color: '#1a2a3a', text: '#2196f3' },
+        { label: 'Nothing', color: '#1a1a1a', text: '#555' },
+        { label: '$0.25', color: '#1a3a1a', text: '#4caf50' },
+        { label: 'Nothing', color: '#222', text: '#555' },
+        { label: '$1.00', color: '#3a2a1a', text: '#ff9800' },
+        { label: 'Nothing', color: '#1a1a1a', text: '#555' },
+        { label: '$0.25', color: '#1a3a1a', text: '#4caf50' },
+        { label: 'Nothing', color: '#222', text: '#555' },
+        { label: '$2.00', color: '#3a1a1a', text: '#f44336' },
       ];
-      const canvas = document.getElementById('wheelCanvas');
-      const ctx = canvas.getContext('2d');
-      const dpr = window.devicePixelRatio || 1;
-      canvas.width = 300 * dpr;
-      canvas.height = 300 * dpr;
-      canvas.style.width = '300px';
-      canvas.style.height = '300px';
-      ctx.scale(dpr, dpr);vas');
+      const cx = 150, cy = 150, r = 140;
+      const svg = document.getElementById('wheelSvg');
       let currentAngle = 0;
-      function drawWheel(angle) {
-        const cx = 150, cy = 150, r = 140;
+
+      function polarToCartesian(angle, radius) {
+        return {
+          x: cx + radius * Math.cos(angle),
+          y: cy + radius * Math.sin(angle)
+        };
+      }
+
+      function buildWheel(angle) {
+        svg.innerHTML = '';
         const slice = (2 * Math.PI) / prizes.length;
-        ctx.clearRect(0, 0, 300, 300);
         prizes.forEach((p, i) => {
           const start = angle + i * slice;
           const end = start + slice;
-          ctx.beginPath();
-          ctx.moveTo(cx, cy);
-          ctx.arc(cx, cy, r, start, end);
-          ctx.fillStyle = p.color;
-          ctx.fill();
-          ctx.strokeStyle = '#333';
-          ctx.lineWidth = 1;
-          ctx.stroke();
-          ctx.save();
-          ctx.translate(cx, cy);
-          ctx.rotate(start + slice / 2);
-          ctx.textAlign = 'right';
-          ctx.fillStyle = '#e0e0e0';
-          ctx.font = 'bold 13px Inter, sans-serif';
-          ctx.fillText(p.label, r - 10, 5);
-          ctx.restore();
+          const p1 = polarToCartesian(start, r);
+          const p2 = polarToCartesian(end, r);
+          const largeArc = slice > Math.PI ? 1 : 0;
+          const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+          path.setAttribute('d', \`M \${cx} \${cy} L \${p1.x} \${p1.y} A \${r} \${r} 0 \${largeArc} 1 \${p2.x} \${p2.y} Z\`);
+          path.setAttribute('fill', p.color);
+          path.setAttribute('stroke', '#333');
+          path.setAttribute('stroke-width', '1');
+          svg.appendChild(path);
+          const mid = angle + i * slice + slice / 2;
+          const textR = r - 20;
+          const tp = polarToCartesian(mid, textR);
+          const text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+          text.setAttribute('x', tp.x);
+          text.setAttribute('y', tp.y);
+          text.setAttribute('fill', p.text);
+          text.setAttribute('font-size', '12');
+          text.setAttribute('font-weight', 'bold');
+          text.setAttribute('font-family', 'Inter, sans-serif');
+          text.setAttribute('text-anchor', 'middle');
+          text.setAttribute('dominant-baseline', 'middle');
+          text.setAttribute('transform', \`rotate(\${(mid * 180 / Math.PI) + 90}, \${tp.x}, \${tp.y})\`);
+          text.textContent = p.label;
+          svg.appendChild(text);
         });
-        ctx.beginPath();
-        ctx.arc(cx, cy, 20, 0, 2 * Math.PI);
-        ctx.fillStyle = '#111';
-        ctx.fill();
       }
-      drawWheel(currentAngle);
+
+      buildWheel(currentAngle);
       let spinning = false;
+
       async function doSpin() {
         if (spinning) return;
         spinning = true;
         document.getElementById('spin-btn').disabled = true;
         document.getElementById('spin-result').textContent = '';
-  
         const res = await fetch('/api/spin', { method: 'POST' });
         const data = await res.json();
-  
         if (data.error) {
           document.getElementById('spin-result').textContent = data.error;
           spinning = false;
           document.getElementById('spin-btn').disabled = false;
           return;
         }
-  
         const sliceIndex = data.sliceIndex;
         const sliceAngle = (2 * Math.PI) / prizes.length;
         const targetAngle = -(sliceIndex * sliceAngle + sliceAngle / 2);
@@ -557,24 +561,22 @@ app.get('/spin', async (req, res) => {
         const normalizedCurrent = currentAngle % (2 * Math.PI);
         const diff = ((targetAngle - normalizedCurrent) % (2 * Math.PI) + 2 * Math.PI) % (2 * Math.PI);
         const finalAngle = currentAngle + extraSpins + diff;
-  
         const duration = 4000;
         const start = performance.now();
         const startAngle = currentAngle;
-  
         function animate(now) {
           const elapsed = now - start;
           const progress = Math.min(elapsed / duration, 1);
           const ease = 1 - Math.pow(1 - progress, 4);
           currentAngle = startAngle + (finalAngle - startAngle) * ease;
-          drawWheel(currentAngle);
+          buildWheel(currentAngle);
           if (progress < 1) {
             requestAnimationFrame(animate);
           } else {
             currentAngle = finalAngle;
-            drawWheel(currentAngle);
+            buildWheel(currentAngle);
             spinning = false;
-      const result = data.prize;
+            const result = data.prize;
             if (result.amount > 0) {
               document.getElementById('spin-result').innerHTML = '<span style="color:#f0c040;">🎉 You won ' + result.label + '!</span>';
             } else {
