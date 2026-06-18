@@ -174,6 +174,9 @@ function getLayout(user, balance, activePage, content) {
     <a href="/topup" class="slide-link ${activePage === 'topup' ? 'active' : ''}" onclick="closeMenu()">
       <span class="slide-link-icon">💳</span> Top Up
     </a>
+    <a href="/spin" class="slide-link ${activePage === 'spin' ? 'active' : ''}" onclick="closeMenu()">
+      <span class="slide-link-icon">🎡</span> Spin Wheel
+    </a>
     <a href="/logout" class="slide-link red">
       <span class="slide-link-icon">🚪</span> Sign Out
     </a>
@@ -199,6 +202,9 @@ function getLayout(user, balance, activePage, content) {
     <div class="sidebar-cat">Account</div>
     <a href="/topup" class="sidebar-link ${activePage === 'topup' ? 'active' : ''}">
       <span class="sidebar-icon">💳</span> Top Up
+    </a>
+    <a href="/spin" class="sidebar-link ${activePage === 'spin' ? 'active' : ''}">
+      <span class="sidebar-icon">🎡</span> Spin Wheel
     </a>
     <a href="/logout" class="sidebar-link red">
       <span class="sidebar-icon">🚪</span> Sign Out
@@ -390,6 +396,7 @@ app.post('/plisio-webhook', upload.any(), async (req, res) => {
     const orderNumber = data.order_number;
     const pending = await db.collection('pending').findOne({ order_number: orderNumber });
     if (!pending) return res.sendStatus(200);
+    await addSpins(pending.user_id, Math.floor(pending.amount / 10));
     await addBalance(pending.user_id, pending.amount);
     await db.collection('pending').deleteOne({ order_number: orderNumber });
     console.log(`Added $${pending.amount} to user ${pending.user_id}`);
@@ -406,6 +413,187 @@ app.post('/plisio-webhook', upload.any(), async (req, res) => {
   }
 });
  
+async function getSpins(userId) {
+  const doc = await db.collection('spins').findOne({ _id: userId });
+  return doc?.spins || 0;
+}
+
+async function addSpins(userId, amount) {
+  await db.collection('spins').updateOne(
+    { _id: userId },
+    { $inc: { spins: amount } },
+    { upsert: true }
+  );
+}
+
+const SPIN_PRIZES = [
+  { label: 'Nothing', amount: 0, chance: 60 },
+  { label: '$0.25', amount: 0.25, chance: 25 },
+  { label: '$0.50', amount: 0.50, chance: 10 },
+  { label: '$1.00', amount: 1.00, chance: 4 },
+  { label: '$2.00', amount: 2.00, chance: 1 },
+];
+
+function spinWheel() {
+  const rand = Math.random() * 100;
+  let cumulative = 0;
+  for (const prize of SPIN_PRIZES) {
+    cumulative += prize.chance;
+    if (rand < cumulative) return prize;
+  }
+  return SPIN_PRIZES[0];
+}
+
+app.get('/spin', async (req, res) => {
+  if (!req.session.user) return res.redirect('/login');
+  const balance = await getBalance(req.session.user.id);
+  const spins = await getSpins(req.session.user.id);
+  const content = `
+    <div class="topup-card" style="max-width:500px;">
+      <h2>🎡 Spin Wheel</h2>
+      <p style="color:var(--text-muted);font-size:14px;margin-bottom:20px;">Earn spins by topping up — every $10 = 1 spin!</p>
+      <div style="background:var(--bg);border:1px solid #222;border-radius:10px;padding:16px;margin-bottom:20px;text-align:center;">
+        <div style="font-size:28px;font-weight:800;color:var(--gold);">${spins}</div>
+        <div style="font-size:12px;color:var(--text-muted);margin-top:4px;">Spins Available</div>
+      </div>
+      <div style="position:relative;width:300px;height:300px;margin:0 auto 24px;">
+        <canvas id="wheelCanvas" width="300" height="300"></canvas>
+        <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:40px;height:40px;background:var(--bg2);border:3px solid var(--gold);border-radius:50%;z-index:10;"></div>
+        <div style="position:absolute;top:-12px;left:50%;transform:translateX(-50%);font-size:24px;z-index:10;">▼</div>
+      </div>
+      <div id="spin-result" style="text-align:center;font-size:18px;font-weight:700;margin-bottom:16px;min-height:28px;"></div>
+      <button class="topup-btn" id="spin-btn" onclick="doSpin()" ${spins === 0 ? 'disabled style="opacity:0.5;cursor:not-allowed;"' : ''}>
+        ${spins === 0 ? 'No Spins Available' : 'Spin!'}
+      </button>
+    </div>
+    <script>
+      const prizes = [
+        { label: 'Nothing', color: '#1a1a1a' },
+        { label: '$0.25', color: '#2a4a2a' },
+        { label: 'Nothing', color: '#1a1a1a' },
+        { label: '$0.50', color: '#2a3a4a' },
+        { label: 'Nothing', color: '#1a1a1a' },
+        { label: '$0.25', color: '#2a4a2a' },
+        { label: 'Nothing', color: '#1a1a1a' },
+        { label: '$1.00', color: '#4a3a2a' },
+        { label: 'Nothing', color: '#1a1a1a' },
+        { label: '$0.25', color: '#2a4a2a' },
+        { label: 'Nothing', color: '#1a1a1a' },
+        { label: '$2.00', color: '#4a2a2a' },
+      ];
+      const canvas = document.getElementById('wheelCanvas');
+      const ctx = canvas.getContext('2d');
+      let currentAngle = 0;
+      function drawWheel(angle) {
+        const cx = 150, cy = 150, r = 140;
+        const slice = (2 * Math.PI) / prizes.length;
+        ctx.clearRect(0, 0, 300, 300);
+        prizes.forEach((p, i) => {
+          const start = angle + i * slice;
+          const end = start + slice;
+          ctx.beginPath();
+          ctx.moveTo(cx, cy);
+          ctx.arc(cx, cy, r, start, end);
+          ctx.fillStyle = p.color;
+          ctx.fill();
+          ctx.strokeStyle = '#333';
+          ctx.lineWidth = 1;
+          ctx.stroke();
+          ctx.save();
+          ctx.translate(cx, cy);
+          ctx.rotate(start + slice / 2);
+          ctx.textAlign = 'right';
+          ctx.fillStyle = '#e0e0e0';
+          ctx.font = 'bold 13px Inter, sans-serif';
+          ctx.fillText(p.label, r - 10, 5);
+          ctx.restore();
+        });
+        ctx.beginPath();
+        ctx.arc(cx, cy, 20, 0, 2 * Math.PI);
+        ctx.fillStyle = '#111';
+        ctx.fill();
+      }
+      drawWheel(currentAngle);
+      let spinning = false;
+      async function doSpin() {
+        if (spinning) return;
+        spinning = true;
+        document.getElementById('spin-btn').disabled = true;
+        document.getElementById('spin-result').textContent = '';
+        const res = await fetch('/api/spin', { method: 'POST' });
+        const data = await res.json();
+        if (data.error) {
+          document.getElementById('spin-result').textContent = data.error;
+          spinning = false;
+          return;
+        }
+        const targetSlice = data.sliceIndex;
+        const sliceAngle = (2 * Math.PI) / prizes.length;
+        const targetAngle = -(targetSlice * sliceAngle + sliceAngle / 2);
+        const extraSpins = 5 * 2 * Math.PI;
+        const finalAngle = currentAngle + extraSpins + (targetAngle - (currentAngle % (2 * Math.PI)));
+        const duration = 4000;
+        const start = performance.now();
+        const startAngle = currentAngle;
+        function animate(now) {
+          const elapsed = now - start;
+          const progress = Math.min(elapsed / duration, 1);
+          const ease = 1 - Math.pow(1 - progress, 4);
+          currentAngle = startAngle + (finalAngle - startAngle) * ease;
+          drawWheel(currentAngle);
+          if (progress < 1) {
+            requestAnimationFrame(animate);
+          } else {
+            currentAngle = finalAngle;
+            drawWheel(currentAngle);
+            spinning = false;
+            const result = data.prize;
+            if (result.amount > 0) {
+              document.getElementById('spin-result').innerHTML = '<span style="color:#f0c040;">🎉 You won ' + result.label + '!</span>';
+            } else {
+              document.getElementById('spin-result').textContent = 'Better luck next time!';
+            }
+            if (data.spinsLeft > 0) {
+              document.getElementById('spin-btn').disabled = false;
+              document.getElementById('spin-btn').textContent = 'Spin! (' + data.spinsLeft + ' left)';
+            } else {
+              document.getElementById('spin-btn').textContent = 'No Spins Available';
+            }
+          }
+        }
+        requestAnimationFrame(animate);
+      }
+    </script>`;
+  res.send(getLayout(req.session.user, balance, 'spin', content));
+});
+
+app.post('/api/spin', async (req, res) => {
+  if (!req.session.user) return res.status(401).json({ error: 'Not logged in' });
+  const spins = await getSpins(req.session.user.id);
+  if (spins <= 0) return res.json({ error: 'No spins available!' });
+  await db.collection('spins').updateOne({ _id: req.session.user.id }, { $inc: { spins: -1 } });
+  const prize = spinWheel();
+  if (prize.amount > 0) await addBalance(req.session.user.id, prize.amount);
+  const sliceMap = { 'Nothing': 0, '$0.25': 1, '$0.50': 3, '$1.00': 7, '$2.00': 11 };
+  const sliceIndex = sliceMap[prize.label] ?? 0;
+  const spinsLeft = await getSpins(req.session.user.id);
+  res.json({ prize, sliceIndex, spinsLeft });
+});
+
+app.get('/admin/give-spins', async (req, res) => {
+  if (req.query.key !== process.env.ADMIN_KEY) return res.status(403).send('Forbidden');
+  const amount = parseInt(req.query.amount) || 1;
+  const users = await db.collection('balances').find({}).toArray();
+  for (const user of users) {
+    await db.collection('spins').updateOne(
+      { _id: user._id },
+      { $inc: { spins: amount } },
+      { upsert: true }
+    );
+  }
+  res.send(`✅ Gave ${amount} spin(s) to ${users.length} users!`);
+});
+
 app.get('/api/balance', async (req, res) => {
   if (!req.session.user) return res.status(401).json({ error: 'Not logged in' });
   const balance = await getBalance(req.session.user.id);
