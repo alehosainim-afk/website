@@ -556,7 +556,7 @@ app.get('/spin', async (req, res) => {
         }
         const sliceIndex = data.sliceIndex;
         const sliceAngle = (2 * Math.PI) / prizes.length;
-        const targetAngle = -(sliceIndex * sliceAngle + sliceAngle / 2);
+        const targetAngle = -((sliceIndex + 0.5) * sliceAngle);
         const extraSpins = 5 * 2 * Math.PI;
         const normalizedCurrent = ((currentAngle % (2 * Math.PI)) + 2 * Math.PI) % (2 * Math.PI);
         const targetNormalized = ((targetAngle % (2 * Math.PI)) + 2 * Math.PI) % (2 * Math.PI);
