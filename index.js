@@ -298,11 +298,32 @@ app.get('/topup', async (req, res) => {
         <div class="balance-amount">$${balance.toFixed(2)}</div>
         <div class="balance-label">Current Balance</div>
       </div>
-      <input class="topup-input" type="number" id="amount" placeholder="Enter amount in USD (e.g. 10)" min="1" step="0.01">
+      <input class="topup-input" type="number" id="amount" placeholder="Enter amount in USD (e.g. 10)" min="1" step="0.01" oninput="updateSummary(this.value)">
+      <div style="background:#111;border:1px solid #222;border-radius:12px;padding:20px;margin-bottom:16px;">
+        <div style="display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid #222;">
+          <span style="color:#888;">Amount</span>
+          <span id="summary-amount">$0.00</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid #222;">
+          <span style="color:#888;">You Pay</span>
+          <span id="summary-pay">$0.00</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;padding:10px 0;">
+          <span style="color:#888;">You Receive</span>
+          <span style="color:var(--gold);" id="summary-receive">$0.00 Chroto Bal</span>
+        </div>
+      </div>
       <button class="topup-btn" onclick="topup()">Top Up with LTC</button>
       <div class="topup-msg" id="msg"></div>
     </div>
     <script>
+      function updateSummary(val) {
+        const v = parseFloat(val) || 0;
+        const f = '$' + v.toFixed(2);
+        document.getElementById('summary-amount').textContent = f;
+        document.getElementById('summary-pay').textContent = f;
+        document.getElementById('summary-receive').textContent = f + ' Chroto Bal';
+      }
       async function topup() {
         const amount = document.getElementById('amount').value;
         if (!amount || amount <= 0) return document.getElementById('msg').innerText = 'Please enter a valid amount!';
