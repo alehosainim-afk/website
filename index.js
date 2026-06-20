@@ -5,7 +5,8 @@ const { MongoClient } = require('mongodb');
 const { Client: DiscordClient, GatewayIntentBits } = require('discord.js');
 const multer = require('multer');
 const path = require('path');
- 
+const REVIEW_REPLY_ALLOWED = ['1472661189824872622', '1484756542002692139'];
+
 const app = express();
 const upload = multer();
 const mongoClient = new MongoClient(process.env.MONGODB_URI);
@@ -170,8 +171,8 @@ function getLayout(user, balance, activePage, content) {
     <a href="/orders" class="slide-link ${activePage === 'orders' ? 'active' : ''}" onclick="closeMenu()">
       <span class="slide-link-icon">🕐</span> My Orders
     </a>
-    <a href="/leave-review" class="sidebar-link ${activePage === 'leave-review' ? 'active' : ''}">
-      <span class="sidebar-icon">⭐</span> Leave a Review
+    <a href="/leave-review" class="slide-link ${activePage === 'leave-review' ? 'active' : ''}" onclick="closeMenu()">
+      <span class="slide-link-icon">⭐</span> Leave a Review
     </a>
     <div class="slide-cat">Account</div>
     <a href="/topup" class="slide-link ${activePage === 'topup' ? 'active' : ''}" onclick="closeMenu()">
@@ -648,21 +649,29 @@ app.post('/api/spin', async (req, res) => {
 
 app.get('/reviews', async (req, res) => {
   const reviews = await db.collection('reviews').find({}).sort({ createdAt: -1 }).limit(100).toArray();
-  
+
   const reviewCards = reviews.map(r => {
     const avatarUrl = r.avatar
       ? `https://cdn.discordapp.com/avatars/${r.userId}/${r.avatar}.png`
       : 'https://cdn.discordapp.com/embed/avatars/0.png';
     const stars = '★'.repeat(r.rating) + '☆'.repeat(5 - r.rating);
-const autoTag = r.auto ? '<div style="color:#666;font-size:11px;margin-top:6px;">⏱ Automatic review · 3 days</div>' : '';
-return `
-  <div class="review-card">
-    <div class="review-stars">${stars}</div>
-    <p class="review-text">"${r.text}"</p>
-    ${autoTag}
+    const autoTag = r.auto ? '<div style="color:#666;font-size:11px;margin-top:6px;">⏱ Automatic review · 3 days</div>' : '';
+    const replyHtml = r.reply
+      ? `<div style="background:#111;border-left:2px solid var(--gold);padding:10px 12px;margin-top:12px;border-radius:6px;"><div style="font-size:11px;color:var(--gold);font-weight:600;margin-bottom:4px;">Reply from ${r.repliedBy}</div><div style="font-size:13px;color:#ccc;">${r.reply}</div></div>`
+      : '';
+    return `
+      <div class="review-card" data-review-id="${r._id}">
+        <div class="review-stars">${stars}</div>
+        <p class="review-text">"${r.text}"</p>
+        ${autoTag}
+        ${replyHtml}
         <div style="display:flex;align-items:center;gap:8px;margin-top:8px;">
           <img src="${avatarUrl}" style="width:24px;height:24px;border-radius:50%;">
           <div class="review-author">${r.username}</div>
+        </div>
+        <div class="reply-form" data-review-id="${r._id}" style="display:none;margin-top:10px;">
+          <textarea class="topup-input reply-input" rows="2" placeholder="Write a reply..." style="resize:vertical;font-size:13px;"></textarea>
+          <button class="topup-btn reply-submit" style="padding:8px;font-size:13px;margin-top:6px;">Send Reply</button>
         </div>
       </div>`;
   }).join('');
@@ -686,6 +695,8 @@ return `
     .review-text { color: var(--text-muted); font-size: 14px; line-height: 1.6; }
     .review-author { font-weight: 600; font-size: 14px; }
     .empty { text-align: center; color: var(--text-muted); padding: 60px 20px; }
+    .topup-input { background: var(--bg); border: 1px solid #333; color: white; padding: 8px 12px; border-radius: 8px; font-size: 13px; width: 100%; font-family: inherit; outline: none; }
+    .topup-btn { background: var(--gold); color: #000; border-radius: 8px; font-weight: 700; border: none; cursor: pointer; font-family: inherit; }
   </style>
 </head>
 <body>
@@ -696,6 +707,28 @@ return `
   <div class="reviews-grid">
     ${reviewCards || '<div class="empty">No reviews yet. Be the first to leave one!</div>'}
   </div>
+  <script>
+    fetch('/api/check-admin').then(r => r.json()).then(data => {
+      if (data.isAdmin) {
+        document.querySelectorAll('.reply-form').forEach(f => f.style.display = 'block');
+      }
+    });
+    document.querySelectorAll('.reply-submit').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        const form = btn.closest('.reply-form');
+        const reviewId = form.dataset.reviewId;
+        const text = form.querySelector('.reply-input').value;
+        const res = await fetch('/api/reviews/reply', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ reviewId, reply: text })
+        });
+        const data = await res.json();
+        if (data.success) location.reload();
+        else alert(data.error);
+      });
+    });
+  </script>
 </body>
 </html>`;
   res.send(html);
@@ -850,6 +883,23 @@ app.get('/admin/delete-review', async (req, res) => {
   if (req.query.key !== process.env.ADMIN_KEY) return res.status(403).send('Forbidden');
   await db.collection('reviews').deleteOne({ userId: req.query.userId });
   res.send('✅ Review deleted.');
+});
+
+app.post('/api/reviews/reply', async (req, res) => {
+  if (!req.session.user) return res.status(401).json({ error: 'Not logged in' });
+  if (!REVIEW_REPLY_ALLOWED.includes(req.session.user.id)) return res.status(403).json({ error: 'Not authorized' });
+  const { reviewId, reply } = req.body;
+  if (!reply || reply.trim().length < 2) return res.status(400).json({ error: 'Reply too short' });
+  await db.collection('reviews').updateOne(
+    { _id: new (require('mongodb').ObjectId)(reviewId) },
+    { $set: { reply: reply.trim().slice(0, 300), repliedBy: req.session.user.username, repliedAt: new Date() } }
+  );
+  res.json({ success: true });
+});
+
+app.get('/api/check-admin', (req, res) => {
+  const isAdmin = req.session.user && REVIEW_REPLY_ALLOWED.includes(req.session.user.id);
+  res.json({ isAdmin });
 });
 
 app.get('/api/balance', async (req, res) => {
