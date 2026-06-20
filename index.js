@@ -170,6 +170,9 @@ function getLayout(user, balance, activePage, content) {
     <a href="/orders" class="slide-link ${activePage === 'orders' ? 'active' : ''}" onclick="closeMenu()">
       <span class="slide-link-icon">🕐</span> My Orders
     </a>
+    <a href="/leave-review" class="sidebar-link ${activePage === 'leave-review' ? 'active' : ''}">
+      <span class="sidebar-icon">⭐</span> Leave a Review
+    </a>
     <div class="slide-cat">Account</div>
     <a href="/topup" class="slide-link ${activePage === 'topup' ? 'active' : ''}" onclick="closeMenu()">
       <span class="slide-link-icon">💳</span> Top Up
