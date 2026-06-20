@@ -281,6 +281,7 @@ app.get('/logout', (req, res) => {
  
 app.get('/orders', async (req, res) => {
   if (!req.session.user) return res.redirect('/login');
+  await claimEventSpin(req.session.user.id);
   const balance = await getBalance(req.session.user.id);
   const content = `<div class="coming-soon"><h2>🕐 My Orders</h2><p>Coming soon — your order history will appear here.</p></div>`;
   res.send(getLayout(req.session.user, balance, 'orders', content));
@@ -637,6 +638,76 @@ app.get('/admin/give-spins', async (req, res) => {
     );
   }
   res.send(`✅ Gave ${amount} spin(s) to ${users.length} users!`);
+});
+
+// ── Event Spin System ──────────────────────────────────────────
+async function getActiveEvent() {
+  const event = await db.collection('events').findOne({ _id: 'spin_event' });
+  if (event && Date.now() < event.endsAt) return event;
+  return null;
+}
+
+async function claimEventSpin(userId) {
+  const event = await getActiveEvent();
+  if (!event) return false;
+  const claimed = await db.collection('event_claims').findOne({ _id: `${userId}_${event.endsAt}` });
+  if (claimed) return false;
+  await db.collection('event_claims').insertOne({ _id: `${userId}_${event.endsAt}`, userId, claimedAt: Date.now() });
+  await addSpins(userId, 1);
+  return true;
+}
+
+app.get('/admin/start-event', async (req, res) => {
+  if (req.query.key !== process.env.ADMIN_KEY) return res.status(403).send('Forbidden');
+  const hours = parseFloat(req.query.hours) || 24;
+  await db.collection('events').updateOne(
+    { _id: 'spin_event' },
+    { $set: { endsAt: Date.now() + hours * 60 * 60 * 1000 } },
+    { upsert: true }
+  );
+  res.send(`✅ Event started for ${hours} hours! All users who log in during this time get 1 spin.`);
+});
+
+app.get('/admin/stop-event', async (req, res) => {
+  if (req.query.key !== process.env.ADMIN_KEY) return res.status(403).send('Forbidden');
+  await db.collection('events').deleteOne({ _id: 'spin_event' });
+  res.send('✅ Event stopped.');
+});
+
+// ── Reviews System ──────────────────────────────────────────────
+app.get('/api/reviews', async (req, res) => {
+  const reviews = await db.collection('reviews').find({}).sort({ createdAt: -1 }).limit(50).toArray();
+  res.json({ reviews });
+});
+
+app.post('/api/reviews', async (req, res) => {
+  if (!req.session.user) return res.status(401).json({ error: 'Not logged in' });
+  const { rating, text } = req.body;
+  const stars = parseInt(rating);
+  if (!stars || stars < 1 || stars > 5) return res.status(400).json({ error: 'Invalid rating' });
+  if (!text || text.trim().length < 5) return res.status(400).json({ error: 'Review too short' });
+  const existing = await db.collection('reviews').findOne({ userId: req.session.user.id });
+  if (existing) {
+    await db.collection('reviews').updateOne(
+      { userId: req.session.user.id },
+      { $set: { rating: stars, text: text.trim().slice(0, 300), username: req.session.user.username, createdAt: new Date() } }
+    );
+  } else {
+    await db.collection('reviews').insertOne({
+      userId: req.session.user.id,
+      username: req.session.user.username,
+      rating: stars,
+      text: text.trim().slice(0, 300),
+      createdAt: new Date()
+    });
+  }
+  res.json({ success: true });
+});
+
+app.get('/admin/delete-review', async (req, res) => {
+  if (req.query.key !== process.env.ADMIN_KEY) return res.status(403).send('Forbidden');
+  await db.collection('reviews').deleteOne({ userId: req.query.userId });
+  res.send('✅ Review deleted.');
 });
 
 app.get('/api/balance', async (req, res) => {
