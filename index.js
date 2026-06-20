@@ -619,7 +619,7 @@ app.post('/api/spin', async (req, res) => {
   const possibleIndices = prizeToIndices[prize.label] || [0];
   const sliceIndex = possibleIndices[Math.floor(Math.random() * possibleIndices.length)];
   const sliceAngle = (2 * Math.PI) / 12;
-  const targetAngle = -(sliceIndex * sliceAngle + sliceAngle / 2);
+  const targetAngle = -Math.PI / 2 - (sliceIndex * sliceAngle + sliceAngle / 2);
   const spinsLeft = await getSpins(req.session.user.id);
   console.log(`Spin result: ${prize.label}, sliceIndex: ${sliceIndex}, spinsLeft: ${spinsLeft}`);
   res.json({ prize, sliceIndex, targetAngle, spinsLeft });
