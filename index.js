@@ -693,6 +693,49 @@ return `
   res.send(html);
 });
 
+app.get('/leave-review', async (req, res) => {
+  if (!req.session.user) return res.redirect('/login');
+  const balance = await getBalance(req.session.user.id);
+  const content = `
+    <div class="topup-card">
+      <h2>⭐ Leave a Review</h2>
+      <p>Let others know about your experience with Chroto Shop.</p>
+      <div id="star-picker" style="font-size:32px;letter-spacing:6px;margin-bottom:20px;cursor:pointer;">
+        <span data-star="1">☆</span><span data-star="2">☆</span><span data-star="3">☆</span><span data-star="4">☆</span><span data-star="5">☆</span>
+      </div>
+      <textarea id="review-text" class="topup-input" rows="4" placeholder="Share your experience..." style="resize:vertical;"></textarea>
+      <button class="topup-btn" onclick="submitReview()">Submit Review</button>
+      <div class="topup-msg" id="msg"></div>
+    </div>
+    <script>
+      let selectedRating = 0;
+      const stars = document.querySelectorAll('#star-picker span');
+      stars.forEach(s => {
+        s.addEventListener('click', () => {
+          selectedRating = parseInt(s.dataset.star);
+          stars.forEach(st => st.textContent = parseInt(st.dataset.star) <= selectedRating ? '★' : '☆');
+        });
+      });
+      async function submitReview() {
+        const text = document.getElementById('review-text').value;
+        if (selectedRating === 0) return document.getElementById('msg').innerText = 'Please select a star rating!';
+        if (text.trim().length < 5) return document.getElementById('msg').innerText = 'Review must be at least 5 characters.';
+        const res = await fetch('/api/reviews', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ rating: selectedRating, text })
+        });
+        const data = await res.json();
+        if (data.success) {
+          document.getElementById('msg').innerText = 'Thank you for your review!';
+        } else {
+          document.getElementById('msg').innerText = data.error || 'Something went wrong.';
+        }
+      }
+    </script>`;
+  res.send(getLayout(req.session.user, balance, 'leave-review', content));
+});
+
 app.get('/admin/give-spins', async (req, res) => {
   if (req.query.key !== process.env.ADMIN_KEY) return res.status(403).send('Forbidden');
   const amount = parseInt(req.query.amount) || 1;
