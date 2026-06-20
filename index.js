@@ -626,6 +626,59 @@ app.post('/api/spin', async (req, res) => {
   res.json({ prize, sliceIndex, targetAngle, spinsLeft });
 });
 
+app.get('/reviews', async (req, res) => {
+  const reviews = await db.collection('reviews').find({}).sort({ createdAt: -1 }).limit(100).toArray();
+  
+  const reviewCards = reviews.map(r => {
+    const avatarUrl = r.avatar
+      ? `https://cdn.discordapp.com/avatars/${r.userId}/${r.avatar}.png`
+      : 'https://cdn.discordapp.com/embed/avatars/0.png';
+    const stars = '★'.repeat(r.rating) + '☆'.repeat(5 - r.rating);
+    return `
+      <div class="review-card">
+        <div class="review-stars">${stars}</div>
+        <p class="review-text">"${r.text}"</p>
+        <div style="display:flex;align-items:center;gap:8px;margin-top:8px;">
+          <img src="${avatarUrl}" style="width:24px;height:24px;border-radius:50%;">
+          <div class="review-author">${r.username}</div>
+        </div>
+      </div>`;
+  }).join('');
+
+  const html = `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Reviews — Chroto Shop</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    :root { --gold: #f0c040; --bg: #0a0a0a; --bg3: #1a1a1a; --text: #e0e0e0; --text-muted: #888; }
+    body { background: var(--bg); color: var(--text); font-family: 'Segoe UI', sans-serif; padding: 60px 20px; }
+    .reviews-header { text-align: center; margin-bottom: 40px; }
+    .reviews-header h1 { font-size: 32px; font-weight: 800; margin-bottom: 8px; }
+    .reviews-header a { color: var(--gold); text-decoration: none; font-size: 14px; }
+    .reviews-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 20px; max-width: 1100px; margin: 0 auto; }
+    .review-card { background: var(--bg3); border: 1px solid #222; border-radius: 14px; padding: 24px; }
+    .review-stars { color: var(--gold); font-size: 16px; margin-bottom: 10px; }
+    .review-text { color: var(--text-muted); font-size: 14px; line-height: 1.6; }
+    .review-author { font-weight: 600; font-size: 14px; }
+    .empty { text-align: center; color: var(--text-muted); padding: 60px 20px; }
+  </style>
+</head>
+<body>
+  <div class="reviews-header">
+    <h1>Customer Reviews</h1>
+    <a href="/">← Back to home</a>
+  </div>
+  <div class="reviews-grid">
+    ${reviewCards || '<div class="empty">No reviews yet. Be the first to leave one!</div>'}
+  </div>
+</body>
+</html>`;
+  res.send(html);
+});
+
 app.get('/admin/give-spins', async (req, res) => {
   if (req.query.key !== process.env.ADMIN_KEY) return res.status(403).send('Forbidden');
   const amount = parseInt(req.query.amount) || 1;
@@ -640,7 +693,6 @@ app.get('/admin/give-spins', async (req, res) => {
   res.send(`✅ Gave ${amount} spin(s) to ${users.length} users!`);
 });
 
-// ── Event Spin System ──────────────────────────────────────────
 async function getActiveEvent() {
   const event = await db.collection('events').findOne({ _id: 'spin_event' });
   if (event && Date.now() < event.endsAt) return event;
@@ -674,7 +726,6 @@ app.get('/admin/stop-event', async (req, res) => {
   res.send('✅ Event stopped.');
 });
 
-// ── Reviews System ──────────────────────────────────────────────
 app.get('/api/reviews', async (req, res) => {
   const reviews = await db.collection('reviews').find({}).sort({ createdAt: -1 }).limit(50).toArray();
   res.json({ reviews });
@@ -686,23 +737,22 @@ app.post('/api/reviews', async (req, res) => {
   const stars = parseInt(rating);
   if (!stars || stars < 1 || stars > 5) return res.status(400).json({ error: 'Invalid rating' });
   if (!text || text.trim().length < 5) return res.status(400).json({ error: 'Review too short' });
-  const existing = await db.collection('reviews').findOne({ userId: req.session.user.id });
-  if (existing) {
-    await db.collection('reviews').updateOne(
-      { userId: req.session.user.id },
-      { $set: { rating: stars, text: text.trim().slice(0, 300), username: req.session.user.username, createdAt: new Date() } }
-    );
-  } else {
-    await db.collection('reviews').insertOne({
-      userId: req.session.user.id,
-      username: req.session.user.username,
-      rating: stars,
-      text: text.trim().slice(0, 300),
-      createdAt: new Date()
-    });
-  }
-  res.json({ success: true });
-});
+const existing = await db.collection('reviews').findOne({ userId: req.session.user.id });
+if (existing) {
+  await db.collection('reviews').updateOne(
+    { userId: req.session.user.id },
+    { $set: { rating: stars, text: text.trim().slice(0, 300), username: req.session.user.username, avatar: req.session.user.avatar, createdAt: new Date() } }
+  );
+} else {
+  await db.collection('reviews').insertOne({
+    userId: req.session.user.id,
+    username: req.session.user.username,
+    avatar: req.session.user.avatar,
+    rating: stars,
+    text: text.trim().slice(0, 300),
+    createdAt: new Date()
+  });
+}
 
 app.get('/admin/delete-review', async (req, res) => {
   if (req.query.key !== process.env.ADMIN_KEY) return res.status(403).send('Forbidden');
