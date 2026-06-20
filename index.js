@@ -753,6 +753,8 @@ if (existing) {
     createdAt: new Date()
   });
 }
+res.json({ success: true });
+});
 
 app.get('/admin/delete-review', async (req, res) => {
   if (req.query.key !== process.env.ADMIN_KEY) return res.status(403).send('Forbidden');
