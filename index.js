@@ -555,12 +555,11 @@ app.get('/spin', async (req, res) => {
           return;
         }
         const sliceIndex = data.sliceIndex;
-        const sliceAngle = (2 * Math.PI) / prizes.length;
-        const targetAngle = -((sliceIndex + 0.5) * sliceAngle);
+        const targetAngle = data.targetAngle;
         const extraSpins = 5 * 2 * Math.PI;
         const normalizedCurrent = ((currentAngle % (2 * Math.PI)) + 2 * Math.PI) % (2 * Math.PI);
-        const targetNormalized = ((targetAngle % (2 * Math.PI)) + 2 * Math.PI) % (2 * Math.PI);
-        let diff = targetNormalized - normalizedCurrent;
+        const normalizedTarget = ((targetAngle % (2 * Math.PI)) + 2 * Math.PI) % (2 * Math.PI);
+        let diff = normalizedTarget - normalizedCurrent;
         if (diff <= 0) diff += 2 * Math.PI;
         const finalAngle = currentAngle + extraSpins + diff;
         const duration = 4000;
@@ -619,9 +618,11 @@ app.post('/api/spin', async (req, res) => {
   };
   const possibleIndices = prizeToIndices[prize.label] || [0];
   const sliceIndex = possibleIndices[Math.floor(Math.random() * possibleIndices.length)];
+  const sliceAngle = (2 * Math.PI) / 12;
+  const targetAngle = -(sliceIndex * sliceAngle + sliceAngle / 2);
   const spinsLeft = await getSpins(req.session.user.id);
   console.log(`Spin result: ${prize.label}, sliceIndex: ${sliceIndex}, spinsLeft: ${spinsLeft}`);
-  res.json({ prize, sliceIndex, spinsLeft });
+  res.json({ prize, sliceIndex, targetAngle, spinsLeft });
 });
 
 app.get('/admin/give-spins', async (req, res) => {
