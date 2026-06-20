@@ -273,7 +273,9 @@ app.get('/callback', async (req, res) => {
       username: userRes.data.username,
       avatar: userRes.data.avatar
     };
-    res.redirect('/orders');
+    const returnTo = req.session.returnTo || '/orders';
+    delete req.session.returnTo;
+    res.redirect(returnTo);
   } catch (e) {
     console.log('OAuth error:', e.message);
     res.redirect('/');
@@ -700,7 +702,10 @@ return `
 });
 
 app.get('/leave-review', async (req, res) => {
-  if (!req.session.user) return res.redirect('/login');
+  if (!req.session.user) {
+    req.session.returnTo = '/leave-review';
+    return res.redirect('/login');
+  }
   const balance = await getBalance(req.session.user.id);
   const content = `
     <div class="topup-card">
