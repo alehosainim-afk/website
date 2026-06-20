@@ -412,6 +412,18 @@ app.post('/plisio-webhook', upload.any(), async (req, res) => {
     if (!pending) return res.sendStatus(200);
     await addSpins(pending.user_id, Math.floor(pending.amount / 10));
     await addBalance(pending.user_id, pending.amount);
+   const existingReview = await db.collection('reviews').findOne({ userId: pending.user_id });
+const alreadyPending = await db.collection('pending_reviews').findOne({ userId: pending.user_id, reviewed: { $ne: true } });
+if (!existingReview && !alreadyPending) {
+  const discordUser = await discordBot.users.fetch(pending.user_id).catch(() => null);
+  await db.collection('pending_reviews').insertOne({
+    userId: pending.user_id,
+    username: discordUser?.username || 'User',
+    avatar: discordUser?.avatar || null,
+    createdAt: new Date(),
+    reviewed: false
+  });
+}
     await db.collection('pending').deleteOne({ order_number: orderNumber });
     console.log(`Added $${pending.amount} to user ${pending.user_id}`);
     try {
@@ -634,10 +646,12 @@ app.get('/reviews', async (req, res) => {
       ? `https://cdn.discordapp.com/avatars/${r.userId}/${r.avatar}.png`
       : 'https://cdn.discordapp.com/embed/avatars/0.png';
     const stars = '★'.repeat(r.rating) + '☆'.repeat(5 - r.rating);
-    return `
-      <div class="review-card">
-        <div class="review-stars">${stars}</div>
-        <p class="review-text">"${r.text}"</p>
+const autoTag = r.auto ? '<div style="color:#666;font-size:11px;margin-top:6px;">⏱ Automatic review · 3 days</div>' : '';
+return `
+  <div class="review-card">
+    <div class="review-stars">${stars}</div>
+    <p class="review-text">"${r.text}"</p>
+    ${autoTag}
         <div style="display:flex;align-items:center;gap:8px;margin-top:8px;">
           <img src="${avatarUrl}" style="width:24px;height:24px;border-radius:50%;">
           <div class="review-author">${r.username}</div>
@@ -708,6 +722,28 @@ async function claimEventSpin(userId) {
   await addSpins(userId, 1);
   return true;
 }
+
+async function checkAutoReviews() {
+  const threeDaysAgo = new Date(Date.now() - 3 * 24 * 60 * 60 * 1000);
+  const pendingUsers = await db.collection('pending_reviews').find({ createdAt: { $lte: threeDaysAgo }, reviewed: { $ne: true } }).toArray();
+  for (const pending of pendingUsers) {
+    const existing = await db.collection('reviews').findOne({ userId: pending.userId });
+    if (!existing) {
+      await db.collection('reviews').insertOne({
+        userId: pending.userId,
+        username: pending.username,
+        avatar: pending.avatar,
+        rating: 5,
+        text: 'Automatic review after 3 days',
+        auto: true,
+        createdAt: new Date()
+      });
+    }
+    await db.collection('pending_reviews').updateOne({ _id: pending._id }, { $set: { reviewed: true } });
+  }
+}
+
+setInterval(checkAutoReviews, 60 * 60 * 1000);
 
 app.get('/admin/start-event', async (req, res) => {
   if (req.query.key !== process.env.ADMIN_KEY) return res.status(403).send('Forbidden');
