@@ -968,6 +968,113 @@ app.get('/api/balance', async (req, res) => {
   const balance = await getBalance(req.session.user.id);
   res.json({ balance });
 });
+
+app.get('/admin', (req, res) => {
+  const html = `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Panel — Chroto Shop</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    :root { --gold: #f0c040; --bg: #0a0a0a; --bg2: #111; --bg3: #1a1a1a; --text: #e0e0e0; --text-muted: #888; }
+    body { background: var(--bg); color: var(--text); font-family: 'Segoe UI', sans-serif; display: flex; align-items: center; justify-content: center; min-height: 100vh; padding: 20px; }
+    .panel { background: var(--bg3); border: 1px solid #222; border-radius: 14px; padding: 32px; width: 100%; max-width: 480px; }
+    .panel h1 { font-size: 22px; font-weight: 700; margin-bottom: 20px; text-align: center; }
+    .input { background: var(--bg); border: 1px solid #333; color: white; padding: 12px 16px; border-radius: 8px; font-size: 15px; width: 100%; margin-bottom: 12px; font-family: inherit; outline: none; }
+    .input:focus { border-color: var(--gold); }
+    .btn { background: var(--gold); color: #000; padding: 12px 24px; border-radius: 8px; font-weight: 700; font-size: 15px; border: none; cursor: pointer; width: 100%; font-family: inherit; margin-top: 6px; }
+    .section { display: none; margin-top: 24px; padding-top: 20px; border-top: 1px solid #222; }
+    .section.open { display: block; }
+    .section h2 { font-size: 15px; margin-bottom: 10px; color: var(--gold); }
+    .result { margin-top: 10px; font-size: 13px; color: var(--text-muted); word-break: break-word; }
+    .row { display: flex; gap: 8px; margin-bottom: 10px; }
+    .row .input { margin-bottom: 0; }
+  </style>
+</head>
+<body>
+  <div class="panel">
+    <h1>🔑 Admin Panel</h1>
+    <input class="input" type="password" id="adminKey" placeholder="Enter admin key">
+    <button class="btn" onclick="unlock()">Unlock</button>
+
+    <div id="panelBody" class="section">
+      <h2>🎡 Global Spins</h2>
+      <div class="row">
+        <input class="input" type="number" id="globalSpinAmount" placeholder="Amount" value="1">
+        <button class="btn" style="width:auto;white-space:nowrap;" onclick="giveGlobalSpins()">Give to All</button>
+      </div>
+      <div class="result" id="globalSpinResult"></div>
+
+      <h2>🎯 Spins for Specific User</h2>
+      <div class="row">
+        <input class="input" id="userIdSpin" placeholder="Discord User ID">
+        <input class="input" type="number" id="userSpinAmount" placeholder="Amount" value="1" style="max-width:90px;">
+      </div>
+      <button class="btn" onclick="giveUserSpins()">Give Spins</button>
+      <div class="result" id="userSpinResult"></div>
+
+      <h2>⏰ Spin Event</h2>
+      <div class="row">
+        <input class="input" type="number" id="eventHours" placeholder="Duration (hours)" value="24">
+      </div>
+      <button class="btn" onclick="startEvent()">Start Event</button>
+      <button class="btn" style="background:#ed4245;color:white;margin-top:8px;" onclick="stopEvent()">Stop Event</button>
+      <div class="result" id="eventResult"></div>
+
+      <h2>🗑️ Delete Review</h2>
+      <div class="row">
+        <input class="input" id="reviewUserId" placeholder="Discord User ID">
+      </div>
+      <button class="btn" style="background:#ed4245;color:white;" onclick="deleteReview()">Delete Review</button>
+      <div class="result" id="reviewResult"></div>
+    </div>
+  </div>
+
+  <script>
+    let adminKey = '';
+
+    function unlock() {
+      adminKey = document.getElementById('adminKey').value;
+      if (!adminKey) return;
+      document.getElementById('panelBody').classList.add('open');
+    }
+
+    async function giveGlobalSpins() {
+      const amount = document.getElementById('globalSpinAmount').value;
+      const res = await fetch(\`/admin/give-spins?key=\${adminKey}&amount=\${amount}\`);
+      document.getElementById('globalSpinResult').innerText = await res.text();
+    }
+
+    async function giveUserSpins() {
+      const userId = document.getElementById('userIdSpin').value;
+      const amount = document.getElementById('userSpinAmount').value;
+      const res = await fetch(\`/admin/give-spin-user?key=\${adminKey}&userId=\${userId}&amount=\${amount}\`);
+      document.getElementById('userSpinResult').innerText = await res.text();
+    }
+
+    async function startEvent() {
+      const hours = document.getElementById('eventHours').value;
+      const res = await fetch(\`/admin/start-event?key=\${adminKey}&hours=\${hours}\`);
+      document.getElementById('eventResult').innerText = await res.text();
+    }
+
+    async function stopEvent() {
+      const res = await fetch(\`/admin/stop-event?key=\${adminKey}\`);
+      document.getElementById('eventResult').innerText = await res.text();
+    }
+
+    async function deleteReview() {
+      const userId = document.getElementById('reviewUserId').value;
+      const res = await fetch(\`/admin/delete-review?key=\${adminKey}&userId=\${userId}\`);
+      document.getElementById('reviewResult').innerText = await res.text();
+    }
+  </script>
+</body>
+</html>`;
+  res.send(html);
+});
  
 connectDB().then(() => {
   app.listen(3000, () => console.log('Website running on port 3000'));
