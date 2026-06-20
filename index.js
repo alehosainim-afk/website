@@ -860,23 +860,58 @@ app.post('/api/reviews', async (req, res) => {
   const stars = parseInt(rating);
   if (!stars || stars < 1 || stars > 5) return res.status(400).json({ error: 'Invalid rating' });
   if (!text || text.trim().length < 5) return res.status(400).json({ error: 'Review too short' });
-const existing = await db.collection('reviews').findOne({ userId: req.session.user.id });
-if (existing) {
-  await db.collection('reviews').updateOne(
-    { userId: req.session.user.id },
-    { $set: { rating: stars, text: text.trim().slice(0, 300), username: req.session.user.username, avatar: req.session.user.avatar, createdAt: new Date() } }
-  );
-} else {
-  await db.collection('reviews').insertOne({
-    userId: req.session.user.id,
-    username: req.session.user.username,
-    avatar: req.session.user.avatar,
-    rating: stars,
-    text: text.trim().slice(0, 300),
-    createdAt: new Date()
-  });
-}
-res.json({ success: true });
+
+  const starsDisplay = '★'.repeat(stars) + '☆'.repeat(5 - stars);
+  const cleanText = text.trim().slice(0, 300);
+  const avatarUrl = req.session.user.avatar
+    ? `https://cdn.discordapp.com/avatars/${req.session.user.id}/${req.session.user.avatar}.png`
+    : 'https://cdn.discordapp.com/embed/avatars/0.png';
+
+  const existing = await db.collection('reviews').findOne({ userId: req.session.user.id });
+
+  let webhookMessageId = existing?.webhookMessageId;
+
+  try {
+    const embed = {
+      title: `⭐ Review from ${req.session.user.username}`,
+      description: `${starsDisplay}\n\n"${cleanText}"`,
+      color: 0xf0c040,
+      thumbnail: { url: avatarUrl }
+    };
+
+    if (webhookMessageId) {
+      await axios.patch(`${process.env.REVIEW_WEBHOOK_URL}/messages/${webhookMessageId}`, {
+        content: `<@${req.session.user.id}>`,
+        embeds: [embed]
+      });
+    } else {
+      const webhookRes = await axios.post(`${process.env.REVIEW_WEBHOOK_URL}?wait=true`, {
+        content: `<@${req.session.user.id}>`,
+        embeds: [embed]
+      });
+      webhookMessageId = webhookRes.data.id;
+    }
+  } catch (e) {
+    console.log('Webhook error:', e.message);
+  }
+
+  if (existing) {
+    await db.collection('reviews').updateOne(
+      { userId: req.session.user.id },
+      { $set: { rating: stars, text: cleanText, username: req.session.user.username, avatar: req.session.user.avatar, createdAt: new Date(), webhookMessageId } }
+    );
+  } else {
+    await db.collection('reviews').insertOne({
+      userId: req.session.user.id,
+      username: req.session.user.username,
+      avatar: req.session.user.avatar,
+      rating: stars,
+      text: cleanText,
+      createdAt: new Date(),
+      webhookMessageId
+    });
+  }
+  res.json({ success: true });
 });
 
 app.get('/admin/delete-review', async (req, res) => {
@@ -890,10 +925,36 @@ app.post('/api/reviews/reply', async (req, res) => {
   if (!REVIEW_REPLY_ALLOWED.includes(req.session.user.id)) return res.status(403).json({ error: 'Not authorized' });
   const { reviewId, reply } = req.body;
   if (!reply || reply.trim().length < 2) return res.status(400).json({ error: 'Reply too short' });
+
+  const cleanReply = reply.trim().slice(0, 300);
+  const review = await db.collection('reviews').findOne({ _id: new (require('mongodb').ObjectId)(reviewId) });
+
   await db.collection('reviews').updateOne(
     { _id: new (require('mongodb').ObjectId)(reviewId) },
-    { $set: { reply: reply.trim().slice(0, 300), repliedBy: req.session.user.username, repliedAt: new Date() } }
+    { $set: { reply: cleanReply, repliedBy: req.session.user.username, repliedAt: new Date() } }
   );
+
+  if (review?.webhookMessageId) {
+    try {
+      const starsDisplay = '★'.repeat(review.rating) + '☆'.repeat(5 - review.rating);
+      const avatarUrl = review.avatar
+        ? `https://cdn.discordapp.com/avatars/${review.userId}/${review.avatar}.png`
+        : 'https://cdn.discordapp.com/embed/avatars/0.png';
+      await axios.patch(`${process.env.REVIEW_WEBHOOK_URL}/messages/${review.webhookMessageId}`, {
+        content: `<@${review.userId}>`,
+        embeds: [{
+          title: `⭐ Review from ${review.username}`,
+          description: `${starsDisplay}\n\n"${review.text}"`,
+          color: 0xf0c040,
+          thumbnail: { url: avatarUrl },
+          fields: [{ name: `Reply from ${req.session.user.username}`, value: cleanReply }]
+        }]
+      });
+    } catch (e) {
+      console.log('Webhook edit error:', e.message);
+    }
+  }
+
   res.json({ success: true });
 });
 
